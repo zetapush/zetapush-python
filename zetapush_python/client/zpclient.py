@@ -3,7 +3,6 @@
 
 import json
 import websocket
-import time
 import re
 import logging
 import random
@@ -71,6 +70,10 @@ class Client:
         """ React when the WS connection is open"""
         self.wsOpen = True
 
+        # Try to connect if applicable
+        if self.login:
+            self._do_connect()
+
     def listenMsg(self, ws, msg):
         """ React when we received a message from the WS connection"""
         self._processMessageReceived(msg)
@@ -84,18 +87,19 @@ class Client:
         logging.info("WS closed")
         self.wsOpen = False
 
+    def _do_connect(self):
+        jsonMessage = self._formatJSONHandshake()
+
+        self.ws.send(jsonMessage)
+
     def connect(self, login, password):
         """ Launch the connection to the ZetaPush platform """
 
         self.login = login
         self.password = password
 
-        jsonMessage = self._formatJSONHandshake()
-
-        if self.wsOpen is not True:
-            time.sleep(0.5)
-
-        self.ws.send(jsonMessage)
+        if self.wsOpen:
+            self._do_connect()
 
     def disconnect(self):
         """ Launch the disconnection to the ZetaPush platform """
