@@ -149,6 +149,10 @@ class Client:
                     logging.info("Client connected")
                     self.connected = True
                     try:
+                        # Register services appropriately
+                        for name in self.services:
+                            self.services[name].clientConnected()
+
                         self.onConnectionSuccess()
                     except:
                         print("ZpClient::NoConnectionSuccessFunctionDefined")
@@ -185,15 +189,22 @@ class Client:
         # ===================================
         elif self.pattern.match(data['channel']):
             try:
-                if data['data'] is not None and (data['data']['requestId']).split(':')[0] == self.clientId:
-                    service = self.services['macro_0']
-                    service.activeCallback((data['channel']).split('/')[-1], data['data']['result'])    
-            except:
-                pass 
+                split_channel = data['channel'].split('/')
+                if len(split_channel) < 5:
+                    return
+                if 'data' in data and split_channel[2] == self.businessId:
+                    service_name = split_channel[3]
+                    if service_name in self.services:
+                        service = self.services[service_name]
+                        verb = split_channel[4]
+                        service.callCallback(verb, data['data'])
+                    else:
+                        logging.warning("Unknown service name {}".format(service_name))
+            except BaseException as ex:
+                logging.error("Got exception while processing data message {}".format(ex))
         else:
             logging.warning("Unable to read WS message : {}".format(msg))
 
-        
     
 
     

@@ -5,7 +5,6 @@ import json
 import websocket
 import random
 import string
-import time
 import logging
 
 from zetapush_python.utils.constants import *
@@ -30,19 +29,14 @@ class Service:
     def subscribe(self, verb):
         """ Subscribe a service on channel __selfName and completed"""
         logging.info("Subscribe service on {}".format(verb))
-        if self.client.connected is not True:
-            time.sleep(0.5)
+
+        # DG: Removed this, user should only call this API when connected or this call could be deferred by client
+        # if self.client.connected is not True:
+        #     time.sleep(0.5)
         
         # For the channel selfName
         self.client.identifiant = int(self.client.identifiant) + 1
         sub = self.getChannel(verb)
-        res = [{'id': str(self.client.identifiant), 'channel': META_SUBSCRIBE, 'subscription': sub, 'clientId': self.client.clientId}]
-        res = json.dumps(res)
-        self.client.ws.send(res)
-
-        # Fort the channel completed
-        self.client.identifiant = int(self.client.identifiant) + 1
-        sub = "/service/" + self.businessId + "/" + self.deploymentId + "/completed"
         res = [{'id': str(self.client.identifiant), 'channel': META_SUBSCRIBE, 'subscription': sub, 'clientId': self.client.clientId}]
         res = json.dumps(res)
         self.client.ws.send(res)
@@ -58,13 +52,6 @@ class Service:
         res = json.dumps(res)
         self.client.ws.send(res)
 
-        # For the channel completed
-        self.client.identifiant = int(self.client.identifiant) + 1
-        sub = "/service/" + self.businessId + "/" + self.deploymentId + "/completed"
-        res = [{'id': str(self.client.identifiant), 'channel': META_UNSUBSCRIBE, 'subscription': sub, 'clientId': self.client.clientId}]
-        res = json.dumps(res)
-        self.client.ws.send(res)
-
 
     def getChannel(self, verb):
         """ Get the channel of the service """
@@ -72,8 +59,6 @@ class Service:
 
     def send(self, verb, params):
         """ Send message to service """
-        self.subscribe(verb)
-
         logging.info("call {} with : {}".format(verb, params))
         self.client.identifiant = int(self.client.identifiant) + 1
         chan = "/service/" + self.businessId + "/" + self.deploymentId + "/call" 
@@ -84,15 +69,35 @@ class Service:
         res = json.dumps(res)
         self.client.ws.send(res)
 
-        self.unsubscribe(verb)
+    def _internal_on(self, verb, function, json_paths):
+        """ Associate a function to a verb """
+        self.callbacks[verb] = (function, json_paths)
+        if self.client.connected:
+            self.subscribe(verb)
 
     def on(self, verb, function):
         """ Associate a function to a verb """
-        self.callbacks[verb] = function
+        return self._internal_on(verb, function, (['result'],))
 
+    def onError(self, function):
+        self._internal_on("error", function, (['code'],['message']))
 
-    def activeCallback(self, verb, params):
+    def onCompleted(self, function):
+        self._internal_on("completed", function, ())
+
+    def callCallback(self, verb, data):
         """ Receive message from macro (server) """
-        logging.info("Active {} callback with : {}".format(verb, params))
-        self.callbacks[verb](params)
-        
+        logging.info("Call {} callback with : {}".format(verb, data))
+        function, json_paths = self.callbacks[verb]
+        params = []
+        for json_path in json_paths:
+            node = data
+            for json_path_item in json_path:
+                node = node[json_path_item]
+            params.append(node)
+        function(*params)
+
+    def clientConnected(self):
+        # Subscribe to all verbs
+        for verb in self.callbacks:
+            self.subscribe(verb)
