@@ -3,7 +3,6 @@
 
 import json
 import websocket
-import time
 import re
 import logging
 import random
@@ -71,6 +70,10 @@ class Client:
         """ React when the WS connection is open"""
         self.wsOpen = True
 
+        # Try to connect if applicable
+        if self.login:
+            self._do_connect()
+
     def listenMsg(self, ws, msg):
         """ React when we received a message from the WS connection"""
         self._processMessageReceived(msg)
@@ -84,18 +87,19 @@ class Client:
         logging.info("WS closed")
         self.wsOpen = False
 
+    def _do_connect(self):
+        jsonMessage = self._formatJSONHandshake()
+
+        self.ws.send(jsonMessage)
+
     def connect(self, login, password):
         """ Launch the connection to the ZetaPush platform """
 
         self.login = login
         self.password = password
 
-        jsonMessage = self._formatJSONHandshake()
-
-        if self.wsOpen is not True:
-            time.sleep(0.5)
-
-        self.ws.send(jsonMessage)
+        if self.wsOpen:
+            self._do_connect()
 
     def disconnect(self):
         """ Launch the disconnection to the ZetaPush platform """
@@ -145,6 +149,10 @@ class Client:
                     logging.info("Client connected")
                     self.connected = True
                     try:
+                        # Register services appropriately
+                        for name in self.services:
+                            self.services[name].clientConnected()
+
                         self.onConnectionSuccess()
                     except:
                         print("ZpClient::NoConnectionSuccessFunctionDefined")
@@ -181,15 +189,22 @@ class Client:
         # ===================================
         elif self.pattern.match(data['channel']):
             try:
-                if data['data'] is not None and (data['data']['requestId']).split(':')[0] == self.clientId:
-                    service = self.services['macro_0']
-                    service.activeCallback((data['channel']).split('/')[-1], data['data']['result'])    
-            except:
-                pass 
+                split_channel = data['channel'].split('/')
+                if len(split_channel) < 5:
+                    return
+                if 'data' in data and split_channel[2] == self.businessId:
+                    service_name = split_channel[3]
+                    if service_name in self.services:
+                        service = self.services[service_name]
+                        verb = split_channel[4]
+                        service.callCallback(verb, data['data'])
+                    else:
+                        logging.warning("Unknown service name {}".format(service_name))
+            except BaseException as ex:
+                logging.error("Got exception while processing data message {}".format(ex))
         else:
             logging.warning("Unable to read WS message : {}".format(msg))
 
-        
     
 
     

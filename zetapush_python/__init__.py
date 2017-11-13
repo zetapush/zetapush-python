@@ -3,5 +3,5 @@
 
 __version__ = "0.0.1"
 
-from client.zpclient import Client
-from client.service import Service
+from .client.zpclient import Client
+from .client.service import Service
