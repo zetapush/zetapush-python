@@ -7,6 +7,8 @@ import re
 import logging
 import random
 import urllib.request
+import time
+import uuid
 from threading import Thread
 from zetapush_python.utils.constants import *
 
@@ -39,6 +41,7 @@ class Client:
         self.login = None                                                                   #   Login to the ZP platform
         self.password = None                                                                #   Password to the ZP platform
         self.authenticationId = "simple_0"                                                  #   Deployment ID for the authentication service                         
+        self.versionAuthentication = "simple"                                               #   Type of authentication
         self.identifiant = 1                                                                #   Identifiant of the current trame
         self.supportedConnectionTypes = ["websocket", "long-polling"]
         self.ws = websocket.WebSocketApp(self.getUrlServer(), on_message = self.listenMsg, on_error = self.listenError, on_close = self.wsClosed)
@@ -92,12 +95,23 @@ class Client:
 
         self.ws.send(jsonMessage)
 
-    def connect(self, login, password):
-        """ Launch the connection to the ZetaPush platform """
+    def connect(self, login=None, password=None, authenticationService=None, authenticationType=None):
+        """ Launch the connection to the ZetaPush platform
+        If you set authenticationService or auhenticationType, you need to set both.
+        authenticationType can only be 'simple' or 'weak'"""
 
         self.login = login
         self.password = password
+        if authenticationService != None:
+            self.authenticationId = authenticationService
+            self.versionAuthentication = authenticationType
+        elif self.login == None or self.password == None:
+            self.login = str(uuid.uuid4()).replace('-', '')
+            self.authenticationId = "weak_0"
+            self.versionAuthentication = "weak"
 
+        # Wait the WS connection is established
+        time.sleep(0.2)
         if self.wsOpen:
             self._do_connect()
 
@@ -110,9 +124,8 @@ class Client:
 
     def _formatJSONHandshake(self):
         """ Method to format the JSON string """
-
         data = [{ 'ext': { 'authentication': { 'data': { 'login': self.login, 'password': self.password}, \
-                'type': self.businessId + '.' + self.authenticationId + '.simple', 'version': 'none'}}, \
+                'type': self.businessId + '.' + self.authenticationId + '.' + self.versionAuthentication, 'version': 'none'}}, \
                 'id': str(self.identifiant), 'version': '1.0', 'minimumVersion': '1.0', 'channel': META_HANDSHAKE, \
                 'supportedConnectionTypes': self.supportedConnectionTypes, 'advice': { 'timeout': 60000, 'interval': 0}}]
 

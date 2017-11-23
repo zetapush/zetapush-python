@@ -4,7 +4,7 @@ from zetapush_python import Service
 import time
 
 # Create the Client to handle the connection with ZetaPush
-zpClient = Client(businessId="Rj7PY_1I", apiUrl="http://demo-1.zpush.io/zbo/pub/business/")
+zpClient = Client(businessId="zXkUtj0b", apiUrl="http://demo-1.zpush.io/zbo/pub/business/")
 
 # We create the macro service
 serviceMacro = Service("macro_0", zpClient)
