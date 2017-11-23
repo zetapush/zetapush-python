@@ -39,6 +39,16 @@ Now, we need to launch the connection with our credentials. For this example we 
 
 		zpClient.connect(login="user", password="password")
 
+If we want to connect to the ZetaPush platform as Weak connection, we need to **don't** send the *login* and *password* parameters. By default, the SDK use the authentication service named *weak_0*.
+
+#### Set the authentication service
+
+If we need to set the authentication service name, we can write the parameter *authenticationService*. In this case we need also to write the parameter *authenticationType* to define the type of authentication we use. ('simple' or 'weak').
+
+For example we can write :
+
+	zpClient.connect(authenticationService="simple_1", authenticationType="simple")
+
 #### Callback connection
 
 It is useful to launch a function when the connection is established.

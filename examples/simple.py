@@ -36,7 +36,7 @@ def onConnectionSuccessful():
 zpClient.onConnectionSuccess = onConnectionSuccessful
 
 # Launch the connection with our credentials
-zpClient.connect(login="user", password="password")
+zpClient.connect(login='user', password='password')
 
 # Pause the program during 2 seconds
 time.sleep(2)
