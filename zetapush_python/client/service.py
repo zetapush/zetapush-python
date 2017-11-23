@@ -68,6 +68,7 @@ class Service:
         
         res = json.dumps(res)
         self.client.ws.send(res)
+        return requestId
 
     def _internal_on(self, verb, function, json_paths):
         """ Associate a function to a verb """
