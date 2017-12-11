@@ -1,8 +1,6 @@
 from zetapush_python import Client
 from zetapush_python import Service
 
-import time
-
 # Create the Client to handle the connection with ZetaPush
 zpClient = Client(businessId="zXkUtj0b", apiUrl="http://demo-1.zpush.io/zbo/pub/business/")
 
@@ -12,6 +10,9 @@ serviceMacro = Service("macro_0", zpClient)
 # We define a function called when the macroscript "test" return us a result
 def handleTest(params):
     print("result => ", params['result'])
+
+    # Properly close the communication with ZetaPush when we have our result
+    zpClient.stopZPConnection()
 
 def handleError(code, message):
     print("Got error {0} with message {1}".format(code, message))
@@ -38,8 +39,3 @@ zpClient.onConnectionSuccess = onConnectionSuccessful
 # Launch the connection with our credentials
 zpClient.connect(login='user', password='password')
 
-# Pause the program during 2 seconds
-time.sleep(2)
-
-# Properly close the communication with ZetaPush
-zpClient.stopZPConnection()

@@ -29,11 +29,7 @@ class Service:
     def subscribe(self, verb):
         """ Subscribe a service on channel __selfName and completed"""
         logging.info("Subscribe service on {}".format(verb))
-
-        # DG: Removed this, user should only call this API when connected or this call could be deferred by client
-        # if self.client.connected is not True:
-        #     time.sleep(0.5)
-        
+       
         # For the channel selfName
         self.client.identifiant = int(self.client.identifiant) + 1
         sub = self.getChannel(verb)
