@@ -104,8 +104,8 @@ class Client:
         authenticationType can only be 'simple' or 'weak'"""
 
         # First, we disconnect the client
-        # if self.wsOpen:
-        #     self.disconnect()
+        if self.wsOpen:
+            self.disconnect()
 
         self.login = login
         self.password = password

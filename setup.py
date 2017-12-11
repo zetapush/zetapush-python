@@ -6,7 +6,7 @@ with open('requirements.txt') as f:
 
 setup(
     name = 'zetapush_python',
-    version = "0.1.4",
+    version = "0.1.5",
     author = "Damien Le Dantec",
     author_email = "damien.le-dantec@zetapush.com",
     description = "Zetapush Python SDK",
