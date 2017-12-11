@@ -16,6 +16,9 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 __all__ = ['Client']
 
+# TODO: Improve the disonnection handler
+
+
 def singleton(cls):
     instance = None
     def ctor(*args, **kwargs):
@@ -55,7 +58,7 @@ class Client:
         """ Method to get the url server for the websocket connection """
 
         # In case of localhost test
-        if self.url.split("//") == 'ws:':
+        if self.url.split("//")[0] == 'ws:':
             return self.url
 
         res = (urllib.request.urlopen(self.url + self.businessId).read()).decode('utf-8')
@@ -100,6 +103,10 @@ class Client:
         If you set authenticationService or auhenticationType, you need to set both.
         authenticationType can only be 'simple' or 'weak'"""
 
+        # First, we disconnect the client
+        # if self.wsOpen:
+        #     self.disconnect()
+
         self.login = login
         self.password = password
         if authenticationService != None:
@@ -110,8 +117,6 @@ class Client:
             self.authenticationId = "weak_0"
             self.versionAuthentication = "weak"
 
-        # Wait the WS connection is established
-        time.sleep(0.2)
         if self.wsOpen:
             self._do_connect()
 
